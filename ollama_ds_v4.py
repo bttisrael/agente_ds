@@ -227,24 +227,84 @@ def confirmar_gold_existe(_: str = "") -> str:
 @tool("gerar_eda_e_ml_ready")
 def gerar_eda_e_ml_ready(_: str = "") -> str:
     """
-    Le df2_gold.parquet, gera matriz de correlacao como PNG,
-    remove colunas redundantes/IDs e salva df3_ml_ready.parquet.
+    Le df2_gold.parquet, gera visualizacoes completas e salva df3_ml_ready.parquet.
     Nao requer parametros.
     """
     try:
         df     = pd.read_parquet(CONFIG["gold_path"])
         num_df = df.select_dtypes(include="number")
 
+        # ── Grafico 1: Matriz de Correlacao ──────────────────────────────────
         plt.figure(figsize=(12, 9))
-        sns.heatmap(
-            num_df.corr(), annot=True, fmt=".2f",
-            cmap="coolwarm", linewidths=0.5
-        )
+        sns.heatmap(num_df.corr(), annot=True, fmt=".2f",
+                    cmap="coolwarm", linewidths=0.5)
         plt.title("Matriz de Correlacao", fontsize=14)
         plt.tight_layout()
         plt.savefig(CONFIG["corr_png"], dpi=150)
         plt.close()
 
+        # ── Grafico 2: Distribuicao das variaveis numericas ───────────────────
+        colunas_plot = [c for c in num_df.columns
+                        if c not in ["feat_ratio", "feat_soma"]][:8]
+        fig, axes = plt.subplots(2, 4, figsize=(18, 8))
+        axes = axes.flatten()
+        for i, col in enumerate(colunas_plot):
+            axes[i].hist(num_df[col].dropna(), bins=40,
+                         color="#4C72B0", edgecolor="white", alpha=0.85)
+            axes[i].set_title(col, fontsize=10, fontweight="bold")
+            axes[i].set_xlabel("")
+            axes[i].grid(axis="y", alpha=0.3)
+        for j in range(len(colunas_plot), len(axes)):
+            fig.delaxes(axes[j])
+        plt.suptitle("Distribuicao das Variaveis Numericas", fontsize=13,
+                     fontweight="bold", y=1.01)
+        plt.tight_layout()
+        plt.savefig(os.path.join(_BASE_DIR, "distribuicoes.png"), dpi=150)
+        plt.close()
+
+        # ── Grafico 3: Boxplots por variavel numerica ─────────────────────────
+        fig, axes = plt.subplots(2, 4, figsize=(18, 8))
+        axes = axes.flatten()
+        for i, col in enumerate(colunas_plot):
+            axes[i].boxplot(num_df[col].dropna(), patch_artist=True,
+                            boxprops=dict(facecolor="#4C72B0", alpha=0.7))
+            axes[i].set_title(col, fontsize=10, fontweight="bold")
+            axes[i].grid(axis="y", alpha=0.3)
+        for j in range(len(colunas_plot), len(axes)):
+            fig.delaxes(axes[j])
+        plt.suptitle("Boxplots das Variaveis Numericas", fontsize=13,
+                     fontweight="bold", y=1.01)
+        plt.tight_layout()
+        plt.savefig(os.path.join(_BASE_DIR, "boxplots.png"), dpi=150)
+        plt.close()
+
+        # ── Grafico 4: Amostra do dataset como imagem ─────────────────────────
+        amostra = df.head(10)
+        fig, ax = plt.subplots(figsize=(18, 3))
+        ax.axis("off")
+        tabela = ax.table(
+            cellText=amostra.values,
+            colLabels=amostra.columns,
+            cellLoc="center",
+            loc="center",
+        )
+        tabela.auto_set_font_size(False)
+        tabela.set_fontsize(7)
+        tabela.auto_set_column_width(col=list(range(len(amostra.columns))))
+        for (row, col), cell in tabela.get_celld().items():
+            if row == 0:
+                cell.set_facecolor("#4C72B0")
+                cell.set_text_props(color="white", fontweight="bold")
+            elif row % 2 == 0:
+                cell.set_facecolor("#f0f4ff")
+        plt.title("Amostra do Dataset (10 primeiras linhas)", fontsize=11,
+                  fontweight="bold", pad=12)
+        plt.tight_layout()
+        plt.savefig(os.path.join(_BASE_DIR, "amostra_dataset.png"),
+                    dpi=150, bbox_inches="tight")
+        plt.close()
+
+        # ── Remove colunas redundantes ────────────────────────────────────────
         corr_matrix      = num_df.corr().abs()
         upper            = corr_matrix.where(
             np.triu(np.ones(corr_matrix.shape), k=1).astype(bool)
@@ -260,7 +320,9 @@ def gerar_eda_e_ml_ready(_: str = "") -> str:
             f"SUCESSO_EDA\n"
             f"Colunas removidas: {cols_remover}\n"
             f"Shape ML-Ready: {df_filtrado.shape}\n"
-            f"Arquivos gerados: matriz_correlacao.png e df3_ml_ready.parquet"
+            f"Graficos gerados: matriz_correlacao.png, distribuicoes.png, "
+            f"boxplots.png, amostra_dataset.png\n"
+            f"Dataset: df3_ml_ready.parquet"
         )
     except Exception as e:
         return f"ERRO em gerar_eda_e_ml_ready: {e}"
@@ -284,8 +346,8 @@ def confirmar_ml_ready_existe(_: str = "") -> str:
 @tool("treinar_e_salvar_modelo")
 def treinar_e_salvar_modelo(_: str = "") -> str:
     """
-    Le df3_ml_ready.parquet, detecta automaticamente se e classificacao ou regressao,
-    treina RandomForest, salva modelo.pkl e Metricas_Modelo.md.
+    Le df3_ml_ready.parquet, treina RandomForest,
+    salva modelo.pkl, Metricas_Modelo.md e feature_importance.png.
     Nao requer parametros.
     """
     try:
@@ -304,17 +366,17 @@ def treinar_e_salvar_modelo(_: str = "") -> str:
         is_classificacao = y.nunique() <= 20 and y.dtype in ["object", "int64", "int32"]
 
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y,
-            test_size=CONFIG["test_size"],
+            X, y, test_size=CONFIG["test_size"],
             random_state=CONFIG["random_state"],
         )
 
         if is_classificacao:
-            modelo  = RandomForestClassifier(n_estimators=100, random_state=CONFIG["random_state"])
+            modelo = RandomForestClassifier(n_estimators=100,
+                                            random_state=CONFIG["random_state"])
             modelo.fit(X_train, y_train)
-            y_pred  = modelo.predict(X_test)
-            acc     = accuracy_score(y_test, y_pred)
-            report  = classification_report(y_test, y_pred)
+            y_pred = modelo.predict(X_test)
+            acc    = accuracy_score(y_test, y_pred)
+            report = classification_report(y_test, y_pred)
             metricas_txt = (
                 f"# Metricas do Modelo\n\n"
                 f"**Tipo:** Classificacao\n"
@@ -323,7 +385,8 @@ def treinar_e_salvar_modelo(_: str = "") -> str:
                 f"```\n{report}\n```"
             )
         else:
-            modelo = RandomForestRegressor(n_estimators=100, random_state=CONFIG["random_state"])
+            modelo = RandomForestRegressor(n_estimators=100,
+                                           random_state=CONFIG["random_state"])
             modelo.fit(X_train, y_train)
             y_pred = modelo.predict(X_test)
             rmse   = mean_squared_error(y_test, y_pred) ** 0.5
@@ -339,15 +402,34 @@ def treinar_e_salvar_modelo(_: str = "") -> str:
         with open(CONFIG["model_pkl"], "wb") as f:
             pickle.dump(modelo, f)
 
+        # ── Feature Importance ────────────────────────────────────────────────
+        importancias = pd.Series(
+            modelo.feature_importances_, index=X.columns
+        ).sort_values(ascending=True).tail(15)
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        bars = ax.barh(importancias.index, importancias.values,
+                       color="#4C72B0", edgecolor="white", alpha=0.85)
+        ax.bar_label(bars, fmt="%.3f", padding=4, fontsize=9)
+        ax.set_xlabel("Importancia", fontsize=11)
+        ax.set_title(
+            f"Top 15 Features Mais Importantes\n(Alvo: {target_col})",
+            fontsize=12, fontweight="bold"
+        )
+        ax.grid(axis="x", alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(os.path.join(_BASE_DIR, "feature_importance.png"), dpi=150)
+        plt.close()
+
         return (
             f"SUCESSO_ML\n"
             f"Coluna alvo: '{target_col}'\n"
             f"Tipo: {'Classificacao' if is_classificacao else 'Regressao'}\n"
-            f"Arquivos gerados: Metricas_Modelo.md e modelo_final.pkl"
+            f"Arquivos gerados: Metricas_Modelo.md, modelo_final.pkl, "
+            f"feature_importance.png"
         )
     except Exception as e:
         return f"ERRO em treinar_e_salvar_modelo: {e}"
-
 
 @tool("confirmar_modelo_existe")
 def confirmar_modelo_existe(_: str = "") -> str:
@@ -367,7 +449,7 @@ def confirmar_modelo_existe(_: str = "") -> str:
 @tool("gerar_readme")
 def gerar_readme(_: str = "") -> str:
     """
-    Gera o README.md consolidando todo o pipeline no padrao CRISP-DM.
+    Gera o README.md completo no padrao notebook com todas as visualizacoes.
     Nao requer parametros.
     """
     try:
@@ -399,15 +481,27 @@ Objetivo: extrair insights e construir um modelo preditivo automaticamente.
 | Gold     | df2_gold.parquet     | Features de engenharia adicionadas |
 | ML-Ready | df3_ml_ready.parquet | Colunas redundantes/IDs removidos  |
 
+### Amostra do Dataset
+
+![Amostra do Dataset](amostra_dataset.png)
+
+Estatistica descritiva completa: [Estatistica_Descritiva.md](Estatistica_Descritiva.md)
+
 ---
 
 ## 3. Analise Exploratoria (EDA)
 
-Correlacao multivariada para evitar multicolinearidade:
+### Distribuicao das Variaveis
+
+![Distribuicoes](distribuicoes.png)
+
+### Boxplots
+
+![Boxplots](boxplots.png)
+
+### Correlacao entre Variaveis
 
 ![Matriz de Correlacao](matriz_correlacao.png)
-
-Estatistica descritiva completa: [Estatistica_Descritiva.md](Estatistica_Descritiva.md)
 
 ---
 
@@ -415,21 +509,28 @@ Estatistica descritiva completa: [Estatistica_Descritiva.md](Estatistica_Descrit
 
 {metricas}
 
+### Features Mais Importantes
+
+![Feature Importance](feature_importance.png)
+
 ---
 
 ## 5. Artefatos Gerados
 
-| Artefato                  | Descricao                   |
-|---------------------------|-----------------------------|
-| modelo_final.pkl          | Modelo treinado (pickle)    |
-| Metricas_Modelo.md        | Metricas de performance     |
-| matriz_correlacao.png     | Matriz de correlacao        |
-| Estatistica_Descritiva.md | Estatistica descritiva      |
+| Artefato                  | Descricao                        |
+|---------------------------|----------------------------------|
+| modelo_final.pkl          | Modelo treinado (pickle)         |
+| Metricas_Modelo.md        | Metricas de performance          |
+| matriz_correlacao.png     | Mapa de calor de correlacao      |
+| distribuicoes.png         | Histogramas das variaveis        |
+| boxplots.png              | Boxplots das variaveis           |
+| amostra_dataset.png       | Primeiras linhas do dataset      |
+| feature_importance.png    | Importancia das features         |
+| Estatistica_Descritiva.md | Estatisticas descritivas         |
 
 ---
 
 ## 6. Como Reproduzir
-
 ```bash
 git clone <url-do-repo>
 echo "KAGGLE_USERNAME=seu_usuario" >> .env
@@ -448,7 +549,6 @@ python ollama_ds_v4.py
         return "SUCESSO_STORY: README.md gerado com sucesso."
     except Exception as e:
         return f"ERRO em gerar_readme: {e}"
-
 
 # ==========================================
 # 4. AGENTES
@@ -614,7 +714,7 @@ def executar_pos_pipeline():
     print("\n" + "=" * 60)
     print("GERANDO README.md")
     print("=" * 60)
-    resultado_readme = gerar_readme.func("")   # <-- .func() acessa a funcao real
+    resultado_readme = gerar_readme.func("")
     print(resultado_readme)
 
     # ── Git ───────────────────────────────────────────────────────────────────
@@ -622,17 +722,20 @@ def executar_pos_pipeline():
     print("INICIANDO VERSIONAMENTO GIT")
     print("=" * 60)
 
-    def git(cmd):
+    def git(cmd, timeout=300):
         print(f"\n> {cmd}")
         try:
             r = subprocess.run(
                 cmd, shell=True, capture_output=True,
-                text=True, timeout=60
+                text=True, timeout=timeout
             )
             saida  = (r.stdout or r.stderr).strip()
             status = "[OK]" if r.returncode == 0 else "[FALHA]"
             print(f"{status} {saida[:200]}")
             return r.returncode == 0
+        except subprocess.TimeoutExpired:
+            print(f"[TIMEOUT] Comando demorou mais de {timeout}s: {cmd}")
+            return False
         except Exception as e:
             print(f"[ERRO] {e}")
             return False
@@ -643,18 +746,38 @@ def executar_pos_pipeline():
         print("Execute: git remote add origin <url-do-seu-repo>")
         return
 
-    arquivos = [
-        "README.md",
-        "matriz_correlacao.png",
-        "Estatistica_Descritiva.md",
-        "Metricas_Modelo.md",
-        "modelo_final.pkl",
-        "df1_silver.parquet",
-        "df2_gold.parquet",
-        "df3_ml_ready.parquet",
-        "ollama_ds_v4.py",
-    ]
-    for arq in arquivos:
+    # Cria .gitignore ANTES de qualquer git add
+    # Garante que arquivos grandes nunca entram no historico
+    gitignore_path = os.path.join(_BASE_DIR, ".gitignore")
+    with open(gitignore_path, "w", encoding="utf-8") as f:
+        f.write("\n".join([
+            "modelo_final.pkl",
+            "df1_silver.parquet",
+            "df2_gold.parquet",
+            "df3_ml_ready.parquet",
+            ".env",
+            "venv/",
+            "__pycache__/",
+            "*.pyc",
+            "pipeline.log",
+        ]) + "\n")
+    print("[OK] .gitignore criado")
+
+    # Remove arquivos grandes do rastreamento caso ja tenham sido adicionados
+    for arq in ["modelo_final.pkl", "df1_silver.parquet", "df2_gold.parquet", "df3_ml_ready.parquet"]:
+        git(f"git rm --cached {arq}")
+
+    # Aumenta buffer para evitar timeout em uploads
+    git("git config http.postBuffer 524288000")
+
+    # Garante que a branch se chama main
+    git("git branch -M main")
+
+    # Adiciona apenas arquivos leves
+    for arq in [".gitignore", "README.md", "matriz_correlacao.png",
+            "distribuicoes.png", "boxplots.png", "amostra_dataset.png",
+            "feature_importance.png", "Estatistica_Descritiva.md",
+            "Metricas_Modelo.md", "ollama_ds_v4.py"]:
         git(f"git add {arq}")
 
     git('git commit -m "feat: pipeline end-to-end com ML, EDA e documentacao"')
@@ -663,8 +786,6 @@ def executar_pos_pipeline():
     print("\n" + "=" * 60)
     print("PIPELINE COMPLETO")
     print("=" * 60)
-
-
 # ==========================================
 # 8. PONTO DE ENTRADA
 # ==========================================

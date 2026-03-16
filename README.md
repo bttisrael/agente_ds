@@ -21,15 +21,27 @@ Objetivo: extrair insights e construir um modelo preditivo automaticamente.
 | Gold     | df2_gold.parquet     | Features de engenharia adicionadas |
 | ML-Ready | df3_ml_ready.parquet | Colunas redundantes/IDs removidos  |
 
+### Amostra do Dataset
+
+![Amostra do Dataset](amostra_dataset.png)
+
+Estatistica descritiva completa: [Estatistica_Descritiva.md](Estatistica_Descritiva.md)
+
 ---
 
 ## 3. Analise Exploratoria (EDA)
 
-Correlacao multivariada para evitar multicolinearidade:
+### Distribuicao das Variaveis
+
+![Distribuicoes](distribuicoes.png)
+
+### Boxplots
+
+![Boxplots](boxplots.png)
+
+### Correlacao entre Variaveis
 
 ![Matriz de Correlacao](matriz_correlacao.png)
-
-Estatistica descritiva completa: [Estatistica_Descritiva.md](Estatistica_Descritiva.md)
 
 ---
 
@@ -42,21 +54,28 @@ Estatistica descritiva completa: [Estatistica_Descritiva.md](Estatistica_Descrit
 **RMSE:** 121.0317
 
 
+### Features Mais Importantes
+
+![Feature Importance](feature_importance.png)
+
 ---
 
 ## 5. Artefatos Gerados
 
-| Artefato                  | Descricao                   |
-|---------------------------|-----------------------------|
-| modelo_final.pkl          | Modelo treinado (pickle)    |
-| Metricas_Modelo.md        | Metricas de performance     |
-| matriz_correlacao.png     | Matriz de correlacao        |
-| Estatistica_Descritiva.md | Estatistica descritiva      |
+| Artefato                  | Descricao                        |
+|---------------------------|----------------------------------|
+| modelo_final.pkl          | Modelo treinado (pickle)         |
+| Metricas_Modelo.md        | Metricas de performance          |
+| matriz_correlacao.png     | Mapa de calor de correlacao      |
+| distribuicoes.png         | Histogramas das variaveis        |
+| boxplots.png              | Boxplots das variaveis           |
+| amostra_dataset.png       | Primeiras linhas do dataset      |
+| feature_importance.png    | Importancia das features         |
+| Estatistica_Descritiva.md | Estatisticas descritivas         |
 
 ---
 
 ## 6. Como Reproduzir
-
 ```bash
 git clone <url-do-repo>
 echo "KAGGLE_USERNAME=seu_usuario" >> .env
