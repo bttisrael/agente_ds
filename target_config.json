@@ -1,0 +1,13 @@
+{
+  "target_col": "hired",
+  "tipo_problema": "classificacao",
+  "ia_justificativa": "A coluna 'hired' \u00e9 claramente o target pois \u00e9 bin\u00e1ria (0/1), representa o resultado do processo de triagem (contratado ou n\u00e3o), e tem uma taxa de contrata\u00e7\u00e3o de 70.61%, o que indica um processo de sele\u00e7\u00e3o. Todas as outras features descrevem caracter\u00edsticas dos candidatos que seriam usadas para prever esta decis\u00e3o.",
+  "ia_estrategia_features": "1) LIMPEZA URGENTE: Investigar e corrigir valores negativos em resume_length_words. 2) NORMALIZA\u00c7\u00c3O: Padronizar CGPA por university_tier (detectar escala 4.0 vs 10.0) e aplicar StandardScaler em features com skew>1 (experience_years, certifications, hackathons). 3) FEATURE ENGINEERING: Criar 'experience_category' (Junior/Mid/Senior), 'academic_excellence' combinando cgpa+research_papers+university_tier, 'hands_on_score' agregando internships+projects+hackathons, 'technical_breadth' ratio entre programming_languages e certifications. 4) ENCODING: OneHotEncoder para education_level, company_type e university_tier (baixa cardinalidade). 5) BINNING: Agrupar features esparsas (research_papers: 0 vs 1+, hackathons: 0 vs 1-2 vs 3+). 6) INTERA\u00c7\u00d5ES: Testar cgpa*university_tier, experience_years*education_level, skills_score*soft_skills_score. 7) TRATAMENTO DE DESBALANCEAMENTO: Aplicar SMOTE ou ajustar class_weight dado 70.61% de hired=1, priorizando recall se custo de falso negativo for alto.",
+  "ia_insights": [
+    "Dataset desbalanceado com 70.61% de contrata\u00e7\u00f5es - pode necessitar ajuste de threshold ou t\u00e9cnicas de balanceamento para otimizar precis\u00e3o vs recall",
+    "ALERTA CR\u00cdTICO: resume_length_words tem valores negativos (min=-79), indicando erro grave na coleta de dados que precisa investiga\u00e7\u00e3o imediata",
+    "Experi\u00eancia profissional \u00e9 altamente skewed (skew=2.02, max=23.55 anos) com m\u00e9dia de 1.5 anos - sugere popula\u00e7\u00e3o predominantemente j\u00fanior com outliers s\u00eanior que podem distorcer modelos",
+    "Features acad\u00eamicas (research_papers, hackathons) s\u00e3o extremamente esparsas (m\u00e9dias de 0.20 e 0.50) - considerar binariza\u00e7\u00e3o ou agrupamento para evitar overfitting",
+    "CGPA possui range an\u00f4malo (4.15 a 11.23) sugerindo mistura de escalas diferentes (10.0 vs 4.0) entre universidades - necessita normaliza\u00e7\u00e3o por university_tier"
+  ]
+}
