@@ -1,4 +1,4 @@
-# Auto Data Scientist v7 — SOTA Multi-Agent Pipeline
+# Auto Data Scientist  — Multi-Agent Pipeline
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Google Cloud](https://img.shields.io/badge/Google_Cloud-4285F4?style=flat&logo=google-cloud&logoColor=white)](https://cloud.google.com/)
