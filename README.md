@@ -132,10 +132,10 @@ Several data quality issues severely compromise model reliability. The negative 
 | Agent | Tool | AI Intelligence |
 |-------|------|----------------|
 | Ingestor | download_and_save_silver | Not required |
-| Analyst | analyze_data_with_ai | Claude analyzes dataset, identifies target, writes and executes code, self-healing |
-| Feature Engineer | generate_features_with_ai_strategy | Claude decides and writes custom feature code |
+| Analyst | analyze_data_with_ai | Analyzes dataset, identifies target, writes and executes code, self-healing |
+| Feature Engineer | generate_features_with_ai_strategy | Decides and writes custom feature code |
 | EDA Analyst | generate_eda_and_ml_ready | Pure Python (visualizations) |
-| ML Scientist | train_and_save_model | Claude interprets results and writes narrative |
+| ML Scientist | train_and_save_model | Interprets results and writes narrative |
 
 ---
 ## How to Reproduce
