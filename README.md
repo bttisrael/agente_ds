@@ -1,11 +1,14 @@
 # Auto Data Scientist  — Multi-Agent Pipeline
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Google Cloud](https://img.shields.io/badge/Google_Cloud-4285F4?style=flat&logo=google-cloud&logoColor=white)](https://cloud.google.com/)
-[![BigQuery](https://img.shields.io/badge/BigQuery-SQL-4285F4?style=flat&logo=google-cloud&logoColor=white)](https://cloud.google.com/bigquery)
-[![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Gurobi](https://img.shields.io/badge/Gurobi-Optimization-007f00?style=flat&logo=gurobi&logoColor=white)](https://www.gurobi.com/)
-[![Google Colab](https://img.shields.io/badge/Colab-Notebook-F9AB00?style=flat&logo=google-colab&logoColor=white)](https://colab.research.google.com/)
+[![CrewAI](https://img.shields.io/badge/CrewAI-Multi--Agent-6366f1?style=flat)](https://www.crewai.com/)
+[![Claude](https://img.shields.io/badge/Claude-3.5_Sonnet-orange?style=flat&logo=anthropic)](https://www.anthropic.com/)
+[![Kaggle](https://img.shields.io/badge/Kaggle-Dataset-20BEFF?style=flat&logo=kaggle&logoColor=white)](https://www.kaggle.com/)
+[![Optuna](https://img.shields.io/badge/Optuna-HPO-6DB33F?style=flat)](https://optuna.org/)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?style=flat&logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
+[![XGBoost](https://img.shields.io/badge/XGBoost-Boosting-007f00?style=flat)](https://xgboost.readthedocs.io/)
+[![LightGBM](https://img.shields.io/badge/LightGBM-Boosting-02569B?style=flat)](https://lightgbm.readthedocs.io/)
+[![pandas](https://img.shields.io/badge/pandas-DataFrames-150458?style=flat&logo=pandas&logoColor=white)](https://pandas.pydata.org/)
 
 > # Executive Summary
 
